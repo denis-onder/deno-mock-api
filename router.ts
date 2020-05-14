@@ -49,8 +49,19 @@ class Router {
   }
 
   public handleNonStrict(req: ServerRequest) {
-    const { url: endpoint } = req;
-    if (endpoint.includes("/users/id/")) this._service.getUserByID(req);
+    const { url: endpoint, method } = req;
+
+    if (endpoint.includes("/users/id/") && method === "GET")
+      return this._service.getUserByID(req);
+
+    if (endpoint.includes("/users/add") && method === "POST")
+      return this._service.addUser(req);
+
+    // Default case. Return 404 if everything else fails
+    return req.respond({
+      status: 404,
+      body: "Invalid URL.",
+    });
   }
 }
 

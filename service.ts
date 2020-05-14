@@ -6,6 +6,14 @@ type DBClient = {
   query: (query: string) => any;
 };
 
+type AddUserPayload = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: number;
+  age?: number;
+};
+
 class Service {
   private _db: DBClient = { query: (s) => s };
   constructor(dbConnector: DBConnectorFunc) {
@@ -13,7 +21,7 @@ class Service {
   }
   public async getAllUsers(req: ServerRequest) {
     const { rows } = await this._db.query("SELECT * FROM users");
-    req.respond({
+    return req.respond({
       status: 200,
       headers: new Headers({
         "content-type": "application/json",
@@ -27,12 +35,31 @@ class Service {
     const { rows } = await this._db.query(
       `SELECT * FROM users WHERE id = ${id}`
     );
-    req.respond({
+    return req.respond({
       status: 200,
       headers: new Headers({
         "content-type": "application/json",
       }),
       body: JSON.stringify(rows),
+    });
+  }
+  private generatePayload(params: Array<string>) {
+    let output: any = {};
+
+    // Convert the array into an object
+    params.forEach((p) => {
+      const [param, value] = p.split("=");
+      output[param] = value;
+    });
+
+    return output;
+  }
+  public async addUser(req: ServerRequest) {
+    req.headers.set("content-type", "application/json");
+    const [_, params] = req.url.split("/users/add?");
+    return req.respond({
+      status: 200,
+      body: JSON.stringify(this.generatePayload(params.split("?"))),
     });
   }
 }

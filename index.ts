@@ -10,9 +10,8 @@ export const service = createService(dbConnector);
 const router = createRouter(service);
 
 // Define routes
-router.define("GET", "/users/all", (req: ServerRequest) =>
-  service.getAllUsers(req)
-);
+router.define("GET", "/users/all", service.getAllUsers);
+router.define("POST", "/users/new", service.addUser);
 
 const port = Deno.args[0] || 8000;
 

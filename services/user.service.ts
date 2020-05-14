@@ -1,17 +1,15 @@
 import { ServerRequest } from "https://deno.land/std@0.50.0/http/server.ts";
 import createUserEntity from "../enitities/user.enitity.ts";
 
-type DBConnectorFunc = () => any;
-
 type DBClient = {
   query: (query: string, ...args: any) => any;
 };
 
 class UserService {
-  private _db: DBClient = { query: (s) => s };
+  private _db: DBClient;
 
-  constructor(dbConnector: DBConnectorFunc) {
-    (async () => (this._db = await dbConnector()))();
+  constructor(dbClient: DBClient) {
+    this._db = dbClient;
   }
 
   public async getAllUsers(req: ServerRequest) {
@@ -26,19 +24,30 @@ class UserService {
     });
   }
 
+  private generateResponse(res: any) {
+    const { rowDescription: _, rows } = res;
+    const { columns } = _;
+
+    let response: any = {};
+
+    for (let i = 0; i < rows[0].length; i++) {
+      response[columns[i].name] = rows[0][i];
+    }
+
+    return response;
+  }
+
   public async getUserByID(req: ServerRequest) {
     // Parse the params out of the URL
     const [_, id] = req.url.split("/users/id/");
-    const { rows } = await this._db.query(
-      `SELECT * FROM users WHERE id = ${id}`
-    );
+    const res = await this._db.query(`SELECT * FROM users WHERE id = ${id}`);
 
     return req.respond({
       status: 200,
       headers: new Headers({
         "content-type": "application/json",
       }),
-      body: JSON.stringify(rows),
+      body: JSON.stringify(this.generateResponse(res)),
     });
   }
 
@@ -65,7 +74,6 @@ class UserService {
 
     if (newUser.valid) {
       const { firstname, lastname, email, age, phonenumber } = newUser.data;
-      console.log(newUser.data);
       res = await this._db.query(
         "INSERT INTO users (firstname, lastname, email, age, phonenumber) VALUES ($1, $2, $3, $4, $5)",
         firstname,
@@ -76,9 +84,12 @@ class UserService {
       );
     }
 
-    console.log(res.rows);
+    console.log(res.query);
 
     return req.respond({
+      headers: new Headers({
+        "content-type": "application/json",
+      }),
       status: newUser.valid ? 200 : 400,
       body: JSON.stringify(newUser),
     });
@@ -87,4 +98,4 @@ class UserService {
 
 export { UserService };
 
-export default (dbConnector: DBConnectorFunc) => new UserService(dbConnector);
+export default (dbClient: DBClient) => new UserService(dbClient);

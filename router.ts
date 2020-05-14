@@ -40,12 +40,9 @@ class Router {
   public handleStrict(req: ServerRequest) {
     const route = this._routes.get(req.url);
 
-    if (!route)
-      throw Error(
-        `Route ${req.url} is not defined.\nPlease use Router.define() to create your route.`
-      );
-
-    route.callback(req);
+    route
+      ? route.callback(req)
+      : req.respond({ status: 404, body: "Endpoint not set. Invalid URL." });
   }
 
   public handleNonStrict(req: ServerRequest) {

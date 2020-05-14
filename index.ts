@@ -1,14 +1,13 @@
 import { serve } from "https://deno.land/std@0.50.0/http/server.ts";
 import createRouter from "./router.ts";
-import dbConnector from "./db/index.ts";
+import dbClient from "./db/index.ts";
 import createService from "./services/user.service.ts";
 
-export const service = createService(dbConnector);
+const service = createService(dbClient);
 const router = createRouter(service);
 
-// Define routes
+// Define strict routes
 router.define("GET", "/users/all", service.getAllUsers);
-router.define("POST", "/users/new", service.addUser);
 
 const port = Deno.args[0] || 8000;
 

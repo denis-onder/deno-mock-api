@@ -1,9 +1,10 @@
 import { ServerRequest } from "https://deno.land/std@0.50.0/http/server.ts";
+import createUserEntity from "../enitities/user.enitity.ts";
 
 type DBConnectorFunc = () => any;
 
 type DBClient = {
-  query: (query: string) => any;
+  query: (query: string, ...args: any) => any;
 };
 
 class UserService {
@@ -56,11 +57,30 @@ class UserService {
   public async addUser(req: ServerRequest) {
     req.headers.set("content-type", "application/json");
 
+    let res;
+
     const [_, params] = req.url.split("/users/add?");
 
+    const newUser = createUserEntity(this.generatePayload(params.split("?")));
+
+    if (newUser.valid) {
+      const { firstname, lastname, email, age, phonenumber } = newUser.data;
+      console.log(newUser.data);
+      res = await this._db.query(
+        "INSERT INTO users (firstname, lastname, email, age, phonenumber) VALUES ($1, $2, $3, $4, $5)",
+        firstname,
+        lastname,
+        email,
+        parseInt(age),
+        parseInt(phonenumber)
+      );
+    }
+
+    console.log(res.rows);
+
     return req.respond({
-      status: 200,
-      body: JSON.stringify(this.generatePayload(params.split("?"))),
+      status: newUser.valid ? 200 : 400,
+      body: JSON.stringify(newUser),
     });
   }
 }

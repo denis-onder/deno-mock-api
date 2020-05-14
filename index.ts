@@ -1,7 +1,4 @@
-import {
-  serve,
-  ServerRequest,
-} from "https://deno.land/std@0.50.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.50.0/http/server.ts";
 import createRouter from "./router.ts";
 import dbConnector from "./db/index.ts";
 import createService from "./services/user.service.ts";

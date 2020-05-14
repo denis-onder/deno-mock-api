@@ -22,7 +22,7 @@ type HTTPMethod =
 class Router {
   private _routes: Map<string, Route> = new Map();
 
-  public isDefined(method: string, endpoint: string) {
+  public isDefined({ method, url: endpoint }: ServerRequest) {
     const route = this._routes.get(endpoint);
     return route && route.method == method;
   }

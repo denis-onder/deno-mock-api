@@ -1,5 +1,5 @@
 import { ServerRequest } from "https://deno.land/std@0.50.0/http/server.ts";
-import { Service } from "./service.ts";
+import { UserService } from "./services/user.service.ts";
 
 type RouteCallback = (req: ServerRequest) => any;
 
@@ -22,9 +22,9 @@ type HTTPMethod =
 
 class Router {
   private _routes: Map<string, Route> = new Map();
-  private _service: Service;
+  private _service: UserService;
 
-  constructor(service: Service) {
+  constructor(service: UserService) {
     this._service = service;
   }
 
@@ -65,4 +65,4 @@ class Router {
   }
 }
 
-export default (service: Service) => new Router(service);
+export default (service: UserService) => new Router(service);

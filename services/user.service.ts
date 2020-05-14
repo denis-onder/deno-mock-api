@@ -6,21 +6,16 @@ type DBClient = {
   query: (query: string) => any;
 };
 
-type AddUserPayload = {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: number;
-  age?: number;
-};
-
-class Service {
+class UserService {
   private _db: DBClient = { query: (s) => s };
+
   constructor(dbConnector: DBConnectorFunc) {
     (async () => (this._db = await dbConnector()))();
   }
+
   public async getAllUsers(req: ServerRequest) {
     const { rows } = await this._db.query("SELECT * FROM users");
+
     return req.respond({
       status: 200,
       headers: new Headers({
@@ -29,12 +24,14 @@ class Service {
       body: JSON.stringify(rows),
     });
   }
+
   public async getUserByID(req: ServerRequest) {
     // Parse the params out of the URL
     const [_, id] = req.url.split("/users/id/");
     const { rows } = await this._db.query(
       `SELECT * FROM users WHERE id = ${id}`
     );
+
     return req.respond({
       status: 200,
       headers: new Headers({
@@ -43,6 +40,7 @@ class Service {
       body: JSON.stringify(rows),
     });
   }
+
   private generatePayload(params: Array<string>) {
     let output: any = {};
 
@@ -54,9 +52,12 @@ class Service {
 
     return output;
   }
+
   public async addUser(req: ServerRequest) {
     req.headers.set("content-type", "application/json");
+
     const [_, params] = req.url.split("/users/add?");
+
     return req.respond({
       status: 200,
       body: JSON.stringify(this.generatePayload(params.split("?"))),
@@ -64,6 +65,6 @@ class Service {
   }
 }
 
-export { Service };
+export { UserService };
 
-export default (dbConnector: DBConnectorFunc) => new Service(dbConnector);
+export default (dbConnector: DBConnectorFunc) => new UserService(dbConnector);

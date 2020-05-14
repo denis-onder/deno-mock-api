@@ -3,8 +3,8 @@ import {
   ServerRequest,
 } from "https://deno.land/std@0.50.0/http/server.ts";
 import createRouter from "./router.ts";
-import dbConnector from "./db.ts";
-import createService from "./service.ts";
+import dbConnector from "./db/index.ts";
+import createService from "./services/user.service.ts";
 
 export const service = createService(dbConnector);
 const router = createRouter(service);

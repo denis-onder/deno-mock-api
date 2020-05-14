@@ -2,18 +2,26 @@ import {
   serve,
   ServerRequest,
 } from "https://deno.land/std@0.50.0/http/server.ts";
-import router from "./router.ts";
-import connectToDB from "./db.ts";
+import createRouter from "./router.ts";
+import dbConnector from "./db.ts";
+import createService from "./service.ts";
+
+export const service = createService(dbConnector);
+const router = createRouter(service);
+
+// Define routes
+router.define("GET", "/users/all", (req: ServerRequest) =>
+  service.getAllUsers(req)
+);
 
 const port = Deno.args[0] || 8000;
-const s = serve({ port: 8000 });
 
+const s = serve({ port: 8000 });
 console.log(`Server running!\nhttp://localhost:${port}/`);
 
-router.define("GET", "/test", (req: ServerRequest) => console.log(req.body));
-
-const db = await connectToDB();
-
 for await (const req of s) {
-  if (router.isDefined(req)) router.handle(req);
+  // Strictly defined routes w/ no parameters
+  if (router.isDefined(req)) router.handleStrict(req);
+  // Handle non-strict routes
+  router.handleNonStrict(req);
 }

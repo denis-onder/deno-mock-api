@@ -1,9 +1,6 @@
 import { ServerRequest } from "https://deno.land/std@0.50.0/http/server.ts";
+import { DBClient } from "../db/index.ts";
 import createUserEntity from "../enitities/user.enitity.ts";
-
-type DBClient = {
-  query: (query: string, ...args: any) => any;
-};
 
 class UserService {
   private _db: DBClient;
@@ -13,15 +10,19 @@ class UserService {
   }
 
   public async getAllUsers(req: ServerRequest) {
-    const { rows } = await this._db.query("SELECT * FROM users");
+    try {
+      const { rows } = await this._db.query("SELECT * FROM users");
 
-    return req.respond({
-      status: 200,
-      headers: new Headers({
-        "content-type": "application/json",
-      }),
-      body: JSON.stringify(rows),
-    });
+      return req.respond({
+        status: 200,
+        headers: new Headers({
+          "content-type": "application/json",
+        }),
+        body: JSON.stringify(rows),
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   private generateResponse(res: any) {
@@ -38,17 +39,21 @@ class UserService {
   }
 
   public async getUserByID(req: ServerRequest) {
-    // Parse the params out of the URL
-    const [_, id] = req.url.split("/users/id/");
-    const res = await this._db.query(`SELECT * FROM users WHERE id = ${id}`);
+    try {
+      // Parse the params out of the URL
+      const [_, id] = req.url.split("/users/id/");
+      const res = await this._db.query(`SELECT * FROM users WHERE id = ${id}`);
 
-    return req.respond({
-      status: 200,
-      headers: new Headers({
-        "content-type": "application/json",
-      }),
-      body: JSON.stringify(this.generateResponse(res)),
-    });
+      return req.respond({
+        status: 200,
+        headers: new Headers({
+          "content-type": "application/json",
+        }),
+        body: JSON.stringify(this.generateResponse(res)),
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   private generatePayload(params: Array<string>) {
@@ -64,35 +69,37 @@ class UserService {
   }
 
   public async addUser(req: ServerRequest) {
-    req.headers.set("content-type", "application/json");
+    try {
+      let res;
 
-    let res;
+      const [_, params] = req.url.split("/users/add?");
 
-    const [_, params] = req.url.split("/users/add?");
+      const newUser = createUserEntity(this.generatePayload(params.split("?")));
 
-    const newUser = createUserEntity(this.generatePayload(params.split("?")));
+      if (newUser.valid) {
+        const { firstname, lastname, email, age, phonenumber } = newUser.data;
+        res = await this._db.query(
+          "INSERT INTO users (firstname, lastname, email, age, phonenumber) VALUES ($1, $2, $3, $4, $5)",
+          firstname,
+          lastname,
+          email,
+          parseInt(age),
+          parseInt(phonenumber)
+        );
+      }
 
-    if (newUser.valid) {
-      const { firstname, lastname, email, age, phonenumber } = newUser.data;
-      res = await this._db.query(
-        "INSERT INTO users (firstname, lastname, email, age, phonenumber) VALUES ($1, $2, $3, $4, $5)",
-        firstname,
-        lastname,
-        email,
-        parseInt(age),
-        parseInt(phonenumber)
-      );
+      console.log(res.query);
+
+      return req.respond({
+        headers: new Headers({
+          "content-type": "application/json",
+        }),
+        status: newUser.valid ? 200 : 400,
+        body: JSON.stringify(newUser),
+      });
+    } catch (error) {
+      console.error(error);
     }
-
-    console.log(res.query);
-
-    return req.respond({
-      headers: new Headers({
-        "content-type": "application/json",
-      }),
-      status: newUser.valid ? 200 : 400,
-      body: JSON.stringify(newUser),
-    });
   }
 }
 

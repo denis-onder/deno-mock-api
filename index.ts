@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.50.0/http/server.ts";
 import createRouter from "./router.ts";
-import dbClient from "./db/index.ts";
+import createDBClient from "./db/index.ts";
 import createService from "./services/user.service.ts";
 
+const dbClient = createDBClient();
 const service = createService(dbClient);
 const router = createRouter(service);
 

@@ -48,6 +48,9 @@ class Router {
   public handleNonStrict(req: ServerRequest) {
     const { url: endpoint, method } = req;
 
+    if (endpoint === "/users/all" && method === "GET")
+      return this._service.getAllUsers(req);
+
     if (endpoint.includes("/users/id/") && method === "GET")
       return this._service.getUserByID(req);
 

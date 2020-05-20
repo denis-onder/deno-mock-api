@@ -11,14 +11,14 @@ class UserService {
 
   public async getAllUsers(req: ServerRequest) {
     try {
-      const { rows } = await this._db.query("SELECT * FROM users");
+      const res = await this._db.query("SELECT * FROM users");
 
       return req.respond({
         status: 200,
         headers: new Headers({
           "content-type": "application/json",
         }),
-        body: JSON.stringify(rows),
+        body: JSON.stringify(this.generateResponse(res)),
       });
     } catch (error) {
       console.error(error);
@@ -29,13 +29,21 @@ class UserService {
     const { rowDescription: _, rows } = res;
     const { columns } = _;
 
-    let response: any = {};
+    let output = [];
 
-    for (let i = 0; i < rows[0].length; i++) {
-      response[columns[i].name] = rows[0][i];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+
+      let obj: any = {};
+
+      for (let j = 0; j < row.length; j++) {
+        obj[columns[j].name] = row[j];
+      }
+
+      output.push(obj);
     }
 
-    return response;
+    return output.length > 0 ? output : output[0];
   }
 
   public async getUserByID(req: ServerRequest) {

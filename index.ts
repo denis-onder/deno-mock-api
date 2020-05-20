@@ -10,7 +10,7 @@ const router = createRouter(service);
 // Define strict routes
 // router.define("GET", "/users/all", service.getAllUsers); // FIXME: Fix the database being innacessible within predefined routes
 
-const port = Deno.args[0] || 8000;
+const port = Deno.env.get("PORT") || 8000;
 
 const s = serve({ port: 8000 });
 console.log(`Server running!\nhttp://localhost:${port}/`);
